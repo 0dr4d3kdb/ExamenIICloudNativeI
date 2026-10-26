@@ -1,0 +1,67 @@
+
+x-backend: &backend
+  build: .
+  env_file:
+    - .env
+  restart: unless-stopped
+
+services:
+  rabbitmq-init:
+    build: .
+    env_file:
+      - .env
+    command: python rabbitmq.py
+    restart: "no"
+
+  flask-api:
+    <<: *backend
+    container_name: flask-api
+    ports:
+      - "5000:5000"
+    command:
+      - gunicorn
+      - --bind
+      - 0.0.0.0:5000
+      - --workers
+      - "1"
+      - app:app
+    depends_on:
+      rabbitmq-init:
+        condition: service_completed_successfully
+
+  rabbitmq-admin:
+    <<: *backend
+    container_name: rabbitmq-admin
+    ports:
+      - "127.0.0.1:5001:5001"
+    command:
+      - gunicorn
+      - --bind
+      - 0.0.0.0:5001
+      - --workers
+      - "1"
+      - admin:app
+    depends_on:
+      rabbitmq-init:
+        condition: service_completed_successfully
+
+  worker-normal:
+    <<: *backend
+    container_name: worker-normal
+    environment:
+      MESSAGE_TYPE: normal
+    command: python worker.py
+    depends_on:
+      rabbitmq-init:
+        condition: service_completed_successfully
+
+  worker-prioritario:
+    <<: *backend
+    container_name: worker-prioritario
+    environment:
+      MESSAGE_TYPE: prioritario
+    command: python worker.py
+    depends_on:
+      rabbitmq-init:
+        condition: service_completed_successfully
+

@@ -1,0 +1,68 @@
+
+services:
+  rabbitmq-1:
+    image: rabbitmq:4.2-management
+    container_name: rabbitmq-1
+    hostname: rabbitmq-1
+    restart: unless-stopped
+
+    environment:
+      RABBITMQ_NODENAME: rabbit@rabbitmq-1
+      RABBITMQ_ERLANG_COOKIE: "secret_cookie_value"
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+    volumes:
+      - rabbitmq1_data:/var/lib/rabbitmq
+
+    networks:
+      - rabbitmq_network
+
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  rabbitmq-2:
+    image: rabbitmq:4.2-management
+    container_name: rabbitmq-2
+    hostname: rabbitmq-2
+    restart: unless-stopped
+
+    environment:
+      RABBITMQ_NODENAME: rabbit@rabbitmq-2
+      RABBITMQ_ERLANG_COOKIE: "secret_cookie_value"
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+
+    volumes:
+      - rabbitmq2_data:/var/lib/rabbitmq
+
+    networks:
+      - rabbitmq_network
+
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  rabbitmq_network:
+    driver: bridge
+
+volumes:
+  rabbitmq1_data:
+  rabbitmq2_data:
+
